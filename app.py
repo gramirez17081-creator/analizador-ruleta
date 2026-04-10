@@ -36,24 +36,33 @@ if st.session_state.historial:
     df_sin_cero = df[df["Número"] != 0]
     total_suertes = len(df_sin_cero)
 
-    # Mostrar estadísticas generales
     if total_suertes > 0:
-        st.subheader("Análisis de Tendencias")
-        c1, c2 = st.columns(2)
+        st.subheader("📈 Análisis de Tendencias")
         
         # Cálculos de porcentajes
         p_par = (df_sin_cero["Paridad"] == "Par").sum() / total_suertes
         p_rojo = (df_sin_cero["Color"] == "Rojo").sum() / total_suertes
         p_bajo = (df_sin_cero["Rango"] == "1-18").sum() / total_suertes
 
-        with c1:
-            st.metric("Pares", f"{p_par*100:.1f}%")
-            st.metric("Rojo", f"{p_rojo*100:.1f}%")
-            st.metric("1-18 (Bajo)", f"{p_bajo*100:.1f}%")
-        with c2:
-            st.metric("Impares", f"{(1-p_par)*100:.1f}%")
-            st.metric("Negro", f"{(1-p_rojo)*100:.1f}%")
-            st.metric("19-36 (Alto)", f"{(1-p_bajo)*100:.1f}%")
+        # ORGANIZACIÓN POR FILAS (Para evitar desorden)
+        
+        # Fila 1: COLORES
+        st.write("**Color**")
+        f1_c1, f1_c2 = st.columns(2)
+        f1_c1.metric("Rojo", f"{p_rojo*100:.1f}%")
+        f1_c2.metric("Negro", f"{(1-p_rojo)*100:.1f}%")
+        
+        # Fila 2: PARIDAD
+        st.write("**Paridad**")
+        f2_c1, f2_c2 = st.columns(2)
+        f2_c1.metric("Pares", f"{p_par*100:.1f}%")
+        f2_c2.metric("Impares", f"{(1-p_par)*100:.1f}%")
+        
+        # Fila 3: RANGOS
+        st.write("**Rango**")
+        f3_c1, f3_c2 = st.columns(2)
+        f3_c1.metric("1-18 (Bajo)", f"{p_bajo*100:.1f}%")
+        f3_c2.metric("19-36 (Alto)", f"{(1-p_bajo)*100:.1f}%")
 
         # --- SECCIÓN DE RECOMENDACIÓN (A partir de 8 números) ---
         st.write("---")
@@ -63,11 +72,11 @@ if st.session_state.historial:
             recomendaciones = []
             
             # Lógica: Sugerir lo que menos ha salido (reversión a la media)
-            if p_par > 0.60: recomendaciones.append("Apostar a **IMPAR** (Atrasado)")
-            elif p_par < 0.40: recomendaciones.append("Apostar a **PAR** (Atrasado)")
-            
             if p_rojo > 0.60: recomendaciones.append("Apostar a **NEGRO** (Atrasado)")
             elif p_rojo < 0.40: recomendaciones.append("Apostar a **ROJO** (Atrasado)")
+            
+            if p_par > 0.60: recomendaciones.append("Apostar a **IMPAR** (Atrasado)")
+            elif p_par < 0.40: recomendaciones.append("Apostar a **PAR** (Atrasado)")
             
             if p_bajo > 0.60: recomendaciones.append("Apostar a **ALTO (19-36)** (Atrasado)")
             elif p_bajo < 0.40: recomendaciones.append("Apostar a **BAJO (1-18)** (Atrasado)")
@@ -76,13 +85,13 @@ if st.session_state.historial:
                 for rec in recomendaciones:
                     st.success(rec)
             else:
-                st.info("Tendencias equilibradas. Espera a una desviación mayor para apostar.")
+                st.info("Tendencias equilibradas. Espera una mayor desviación.")
         else:
-            st.warning(f"Faltan {8 - len(st.session_state.historial)} números más para generar una recomendación.")
+            st.warning(f"Faltan {8 - len(st.session_state.historial)} números para generar recomendación.")
 
     # Historial
-    st.write("### Historial:")
-    st.write(st.session_state.historial[-15:])
+    st.write("### Historial Reciente:")
+    st.info(", ".join(map(str, st.session_state.historial[-15:])))
     
     if st.button("🗑️ Limpiar Todo"):
         st.session_state.historial = []
